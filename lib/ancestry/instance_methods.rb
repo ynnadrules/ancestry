@@ -18,8 +18,8 @@ module Ancestry
               descendant.update_attribute(
                 self.ancestry_base_class.ancestry_column,
                 descendant.read_attribute(descendant.class.ancestry_column).gsub(
-                  /^#{self.child_ancestry}/,
-                  if read_attribute(self.class.ancestry_column).blank? then id.to_s else "#{read_attribute self.class.ancestry_column }/#{id}" end
+                  /^#{self.child_ancestry_was}/,
+                  self.child_ancestry
                 )
               )
             end
@@ -90,7 +90,16 @@ module Ancestry
       # New records cannot have children
       raise Ancestry::AncestryException.new('No child ancestry for new record. Save record before performing tree operations.') if new_record?
 
-      if self.send("#{self.ancestry_base_class.ancestry_column}_was").blank? then id.to_s else "#{self.send "#{self.ancestry_base_class.ancestry_column}_was"}/#{id}" end
+      ancestry = send(ancestry_base_class.ancestry_column)
+      ancestry.blank? ? id.to_s : "#{ancestry}/#{id}"
+    end
+
+    def child_ancestry_was
+      # New records cannot have children
+      raise Ancestry::AncestryException.new('No child ancestry for new record. Save record before performing tree operations.') if new_record?
+
+      ancestry = send("#{self.ancestry_base_class.ancestry_column}_was")
+      ancestry.blank? ? id.to_s : "#{ancestry}/#{id}"
     end
 
     # Ancestors
@@ -256,7 +265,7 @@ module Ancestry
 
     def descendant_conditions
       t = get_arel_table
-      t[get_ancestry_column].matches("#{child_ancestry}/%").or(t[get_ancestry_column].eq(child_ancestry))
+      t[get_ancestry_column].matches("#{child_ancestry_was}/%").or(t[get_ancestry_column].eq(child_ancestry_was))
     end
 
     def descendants depth_options = {}
