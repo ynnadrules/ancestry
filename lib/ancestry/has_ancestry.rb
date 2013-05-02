@@ -4,11 +4,10 @@ module Ancestry
       # Check options
       raise Ancestry::AncestryException.new("Options for has_ancestry must be in a hash.") unless options.is_a? Hash
       options.each do |key, value|
-        unless [:ancestry_column, :orphan_strategy, :cache_depth, :depth_cache_column, :touch].include? key
+        unless [:ancestry_column, :orphan_strategy, :cache_depth, :depth_cache_column, :ancestry_delimiter, :touch].include? key
           raise Ancestry::AncestryException.new("Unknown option for has_ancestry: #{key.inspect} => #{value.inspect}.")
         end
-      end
-
+      end]
 
       # Create ancestry column accessor and set to option or default
       cattr_accessor :ancestry_column
@@ -25,10 +24,14 @@ module Ancestry
       # Include instance methods
       include Ancestry::InstanceMethods
 
-      # Include dynamic class methods
+       # Include dynamic class methods
       extend Ancestry::ClassMethods
 
       extend Ancestry::MaterializedPath
+
+      # Specify ancestry delimiter or default (writer comes from DynamicClassMethods)
+      cattr_reader :ancestry_delimiter
+      self.ancestry_delimiter = options[:ancestry_delimiter] || "/"
 
       # Create orphan strategy accessor and set to option or default (writer comes from DynamicClassMethods)
       cattr_reader :orphan_strategy
@@ -36,6 +39,9 @@ module Ancestry
 
       # Validate that the ancestor ids don't include own id
       validate :ancestry_exclude_self
+
+      # Validate format of ancestry column value
+      validates_format_of ancestry_column, :with => ancestry_pattern, :allow_nil => true
 
       # Named scopes
       scope :roots, lambda { where(root_conditions) }

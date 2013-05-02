@@ -32,9 +32,9 @@ module Ancestry
       node = to_node(object)
       # rails has case sensitive matching.
       if ActiveRecord::VERSION::MAJOR >= 5
-        t[ancestry_column].matches("#{node.child_ancestry}/%", nil, true).or(t[ancestry_column].eq(node.child_ancestry))
+        t[ancestry_column].matches("#{node.child_ancestry}#{self.ancestry_base_class.ancestry_delimiter}%", nil, true).or(t[ancestry_column].eq(node.child_ancestry))
       else
-        t[ancestry_column].matches("#{node.child_ancestry}/%").or(t[ancestry_column].eq(node.child_ancestry))
+        t[ancestry_column].matches("#{node.child_ancestry}#{self.ancestry_base_class.ancestry_delimiter}%").or(t[ancestry_column].eq(node.child_ancestry))
       end
     end
 
@@ -54,7 +54,7 @@ module Ancestry
       # Validates the ancestry, but can also be applied if validation is bypassed to determine if children should be affected
       def sane_ancestry?
         ancestry_value = read_attribute(self.ancestry_base_class.ancestry_column)
-        ancestry_value.nil? || (ancestry_value.to_s =~ Ancestry::ANCESTRY_PATTERN && !ancestor_ids.include?(self.id))
+        ancestry_value.nil? || (ancestry_value.to_s =~ self.ancestry_base_class.ancestry_pattern && !ancestor_ids.include?(self.id))
       end
     end
   end
