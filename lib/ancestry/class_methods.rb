@@ -197,5 +197,9 @@ module Ancestry
         end
       end
     end
+
+    def quoted_ancestry_column
+      "#{connection.quote_table_name(table_name)}.#{connection.quote_column_name(ancestry_column)}"
+    end
   end
 end
