@@ -3,11 +3,15 @@ module Ancestry
     def has_ancestry options = {}
       # Check options
       raise Ancestry::AncestryException.new("Options for has_ancestry must be in a hash.") unless options.is_a? Hash
-      options.each do |key, value|
-        unless [:ancestry_column, :orphan_strategy, :cache_depth, :depth_cache_column, :ancestry_delimiter, :touch].include? key
-          raise Ancestry::AncestryException.new("Unknown option for has_ancestry: #{key.inspect} => #{value.inspect}.")
-        end
-      end]
+      invalid_keys = options.keys - [:ancestry_column, :orphan_strategy, :cache_depth, :depth_cache_column,
+      :ancestry_delimiter, :primary_key_format, :touch]
+      unless invalid_keys.empty?
+        raise Ancestry::AncestryException.new("Unknown option for has_ancestry: #{invalid_keys.inspect}")
+      end
+
+      include Ancestry::InstanceMethods
+      extend Ancestry::ClassMethods
+      extend Ancestry::MaterializedPath
 
       # Create ancestry column accessor and set to option or default
       cattr_accessor :ancestry_column
@@ -20,14 +24,6 @@ module Ancestry
       # Touch ancestors after updating
       cattr_accessor :touch_ancestors
       self.touch_ancestors = options[:touch] || false
-
-      # Include instance methods
-      include Ancestry::InstanceMethods
-
-       # Include dynamic class methods
-      extend Ancestry::ClassMethods
-
-      extend Ancestry::MaterializedPath
 
       # Specify ancestry delimiter or default (writer comes from DynamicClassMethods)
       cattr_reader :ancestry_delimiter
