@@ -5,8 +5,16 @@ module Ancestry
       base.send(:include, InstanceMethods)
     end
 
+    def roots
+      where(root_conditions)
+    end
+
     def root_conditions
       arel_table[ancestry_column].eq(nil)
+    end
+
+    def ancestors_of(object)
+      where(ancestor_conditions(object))
     end
 
     def ancestor_conditions(object)
@@ -15,16 +23,32 @@ module Ancestry
       t[primary_key].in(node.ancestor_ids)
     end
 
+    # def path_of(object)
+    #   where(path_conditions(object))
+    # end
+
+    def path_of(object)
+      to_node(object).path
+    end
+
     def path_conditions(object)
       t = arel_table
       node = to_node(object)
       t[primary_key].in(node.path_ids)
     end
 
+    def children_of(object)
+      where(child_conditions(object))
+    end
+
     def child_conditions(object)
       t = arel_table
       node = to_node(object)
       t[ancestry_column].eq(node.child_ancestry)
+    end
+
+    def descendants_of(object)
+      where(descendant_conditions(object))
     end
 
     def descendant_conditions(object)
@@ -38,16 +62,36 @@ module Ancestry
       end
     end
 
+    def subtree_of(object)
+      where(subtree_conditions(object))
+    end
+
     def subtree_conditions(object)
       t = arel_table
       node = to_node(object)
       descendant_conditions(object).or(t[primary_key].eq(node.id))
     end
 
+    def siblings_of(object)
+      where(sibling_conditions(object))
+    end
+
     def sibling_conditions(object)
       t = arel_table
       node = to_node(object)
       t[ancestry_column].eq(node[ancestry_column])
+    end
+
+    def ordered_by_ancestry(order = nil)
+      if %w(mysql mysql2 sqlite sqlite3 postgresql).include?(connection.adapter_name.downcase) && ActiveRecord::VERSION::MAJOR >= 5
+        reorder("coalesce(#{connection.quote_table_name(table_name)}.#{connection.quote_column_name(ancestry_column)}, '')", order)
+      else
+        reorder("(CASE WHEN #{connection.quote_table_name(table_name)}.#{connection.quote_column_name(ancestry_column)} IS NULL THEN 0 ELSE 1 END), #{connection.quote_table_name(table_name)}.#{connection.quote_column_name(ancestry_column)}", order)
+      end
+    end
+
+    def ordered_by_ancestry_and(order = nil)
+      ordered_by_ancestry_and(order)
     end
 
     module InstanceMethods
