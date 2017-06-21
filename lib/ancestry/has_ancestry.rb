@@ -36,9 +36,6 @@ module Ancestry
       # Validate that the ancestor ids don't include own id
       validate :ancestry_exclude_self
 
-      # Validate format of ancestry column value
-      validates_format_of ancestry_column, :with => ancestry_pattern, :allow_nil => true
-
       # Named scopes
       scope :roots, lambda { where(root_conditions) }
       scope :ancestors_of, lambda { |object| where(ancestor_conditions(object)) }

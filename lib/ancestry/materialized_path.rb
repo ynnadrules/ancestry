@@ -1,7 +1,7 @@
 module Ancestry
   module MaterializedPath
     def self.extended(base)
-      base.validates_format_of base.ancestry_column, :with => Ancestry::ANCESTRY_PATTERN, :allow_nil => true
+      base.validates_format_of base.ancestry_column, :with => base.ancestry_pattern, :allow_nil => true
       base.send(:include, InstanceMethods)
     end
 
