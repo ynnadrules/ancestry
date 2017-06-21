@@ -18,7 +18,7 @@ module Ancestry
         descendant.without_ancestry_callbacks do
           descendant.update_attribute(
             self.ancestry_base_class.ancestry_column,
-            descendant.read_attribute(descendant.class.ancestry_column).gsub /^#{self.child_ancestry}/ do |_match|
+            descendant.read_attribute(descendant.class.ancestry_column).gsub(/^#{self.child_ancestry}/) do |_match|
               if read_attribute(self.class.ancestry_column).blank?
                 id.to_s
               else
